@@ -77,6 +77,19 @@ def test_parse__season__does_not_assume_for_one_digit_episode():
     assert target.metadata.season is None
 
 
+def test_parse__season__normalizes_single_item_episode_lists(mocker):
+    mocker.patch(
+        "mnamer.target.guessit",
+        return_value={"title": "Some Series", "episode": [2]},
+    )
+    target = Target(
+        Path("Some Series - 02.mkv"), SettingStore(media=MediaType.EPISODE)
+    )
+
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 2
+
+
 def test_parse__series():
     file_path = Path("ninja.turtles.s01e04.1080p.ac3.rargb.sample.mp4")
     target = Target(file_path, SettingStore())

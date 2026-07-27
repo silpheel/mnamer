@@ -163,12 +163,19 @@ class Target:
         raw_data = dict(guessit(str(file_path), options))
         if isinstance(raw_data.get("season"), list):
             raw_data = dict(guessit(str(file_path.parts[-1]), options))
+        episode = raw_data.get("episode")
+        if isinstance(episode, list) and len(episode) == 1:
+            episode = episode[0]
+            raw_data["episode"] = episode
         if (
-            raw_data.get("type") == MediaType.EPISODE.value
+            (
+                self._settings.media is MediaType.EPISODE
+                or raw_data.get("type") == MediaType.EPISODE.value
+            )
             and raw_data.get("season") is None
-            and isinstance(raw_data.get("episode"), int)
+            and isinstance(episode, int)
             and any(
-                int(match.group()) == raw_data["episode"]
+                int(match.group()) == episode
                 for match in re.finditer(
                     r"(?<![A-Za-z0-9])\d{2}(?![A-Za-z0-9])", file_path.name
                 )
