@@ -163,6 +163,13 @@ class Target:
         raw_data = dict(guessit(str(file_path), options))
         if isinstance(raw_data.get("season"), list):
             raw_data = dict(guessit(str(file_path.parts[-1]), options))
+        elif raw_data.get("episode") is None:
+            # A season directory can make GuessIt parse the season while
+            # preventing it from recognizing the bare episode in the filename.
+            filename_data = dict(guessit(str(file_path.parts[-1]), options))
+            for key, value in filename_data.items():
+                if value is not None and raw_data.get(key) is None:
+                    raw_data[key] = value
         episode = raw_data.get("episode")
         if isinstance(episode, list) and len(episode) == 1:
             episode = episode[0]

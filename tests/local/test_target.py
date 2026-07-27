@@ -69,6 +69,20 @@ def test_parse__season__assumes_first_season_for_two_digit_episode():
     assert target.metadata.episode == 2
 
 
+def test_parse__episode__retries_filename_when_season_directory_hides_episode():
+    target = Target(
+        Path(
+            "Season 01/"
+            "[Erai-raws] Heroine Seijo Iie All Works Maid desu (Hokori) - 02 "
+            "[720p CR WEB-DL AVC AAC][MultiSub][D294E1F9].mkv"
+        ),
+        SettingStore(),
+    )
+    assert isinstance(target.metadata, MetadataEpisode)
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 2
+
+
 def test_parse__season__does_not_assume_for_one_digit_episode():
     target = Target(
         Path("Some Series - 2.mkv"), SettingStore(media=MediaType.EPISODE)
