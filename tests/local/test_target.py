@@ -61,6 +61,22 @@ def test_parse__season():
     assert target.metadata.season == 1
 
 
+def test_parse__season__assumes_first_season_for_two_digit_episode():
+    file_path = Path("anime.turtles.02.1080p.ac3.rargb.sample.mp4")
+    target = Target(file_path, SettingStore())
+    assert isinstance(target.metadata, MetadataEpisode)
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 2
+
+
+def test_parse__season__does_not_assume_for_one_digit_episode():
+    target = Target(
+        Path("Some Series - 2.mkv"), SettingStore(media=MediaType.EPISODE)
+    )
+    assert isinstance(target.metadata, MetadataEpisode)
+    assert target.metadata.season is None
+
+
 def test_parse__series():
     file_path = Path("ninja.turtles.s01e04.1080p.ac3.rargb.sample.mp4")
     target = Target(file_path, SettingStore())

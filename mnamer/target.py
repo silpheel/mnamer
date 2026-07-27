@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import re
 from pathlib import Path
 from shutil import move
 from typing import Any, ClassVar, Self, override
@@ -162,6 +163,18 @@ class Target:
         raw_data = dict(guessit(str(file_path), options))
         if isinstance(raw_data.get("season"), list):
             raw_data = dict(guessit(str(file_path.parts[-1]), options))
+        if (
+            raw_data.get("type") == MediaType.EPISODE.value
+            and raw_data.get("season") is None
+            and isinstance(raw_data.get("episode"), int)
+            and any(
+                int(match.group()) == raw_data["episode"]
+                for match in re.finditer(
+                    r"(?<![A-Za-z0-9])\d{2}(?![A-Za-z0-9])", file_path.name
+                )
+            )
+        ):
+            raw_data["season"] = 1
         for k, v in raw_data.items():
             if hasattr(v, "alpha3"):
                 try:
