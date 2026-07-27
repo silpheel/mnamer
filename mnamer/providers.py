@@ -310,11 +310,17 @@ class Tvdb(Provider[MetadataEpisode]):
             )
             for entry in episode_data["data"]:
                 try:
+                    entry_episode = entry["aired_episode_number"]
+                    entry_season = entry["aired_season"]
+                    if season is not None and entry_season != season:
+                        continue
+                    if episode is not None and entry_episode != episode:
+                        continue
                     yield MetadataEpisode(
                         date=parse_date(entry["first_aired"]),
-                        episode=entry["aired_episode_number"],
+                        episode=entry_episode,
                         id_tvdb=id_tvdb,
-                        season=entry["aired_season"],
+                        season=entry_season,
                         series=series_data["data"]["series_name"],
                         language=language,
                         synopsis=(entry["overview"] or "")

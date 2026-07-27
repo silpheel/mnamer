@@ -240,6 +240,27 @@ def test_tvdb_search__lazy_login_and_id_search(mocker):
     )
 
 
+def test_tvdb_search__filters_unexpected_episode_rows(mocker):
+    mocker.patch("mnamer.providers.tvdb_login", return_value="token")
+    mocker.patch("mnamer.providers.tvdb_series_id", return_value=TVDB_SERIES)
+    unexpected_episode = {**TVDB_EPISODE, "aired_episode_number": 1}
+    mocker.patch(
+        "mnamer.providers.tvdb_series_id_episodes_query",
+        return_value={
+            "data": [unexpected_episode, TVDB_EPISODE],
+            "links": {"last": 1},
+        },
+    )
+
+    results = list(
+        Tvdb("key").search(
+            MetadataEpisode(series="Example Series", season=1, episode=2)
+        )
+    )
+
+    assert [(result.season, result.episode) for result in results] == [(1, 2)]
+
+
 def test_tvdb_search__paginates_and_skips_bad_episode_rows(mocker):
     mocker.patch("mnamer.providers.tvdb_login", return_value="token")
     mocker.patch("mnamer.providers.tvdb_series_id", return_value=TVDB_SERIES)

@@ -266,5 +266,21 @@ def test_query():
     pass  # TODO
 
 
+def test_query__filters_results_to_parsed_episode(mocker):
+    target = Target(
+        Path("Some Series - 02.mkv"), SettingStore(media=MediaType.EPISODE)
+    )
+    target._provider = mocker.Mock()
+    target._provider.search.return_value = [
+        MetadataEpisode(series="Some Series", season=1, episode=1),
+        MetadataEpisode(series="Some Series", season=1, episode=2),
+        MetadataEpisode(series="Some Series", season=2, episode=2),
+    ]
+
+    results = target.query()
+
+    assert [(result.season, result.episode) for result in results] == [(1, 2)]
+
+
 def test_relocate():
     pass  # TODO

@@ -280,12 +280,25 @@ class Target:
             return []
         seen = set()
         response = []
-        for idx, result in enumerate(results, start=1):
+        for result in results:
+            if isinstance(self.metadata, MetadataEpisode) and isinstance(
+                result, MetadataEpisode
+            ):
+                if (
+                    self.metadata.season is not None
+                    and result.season != self.metadata.season
+                ):
+                    continue
+                if (
+                    self.metadata.episode is not None
+                    and result.episode != self.metadata.episode
+                ):
+                    continue
             if str(result) in seen:
                 continue
             response.append(result)
             seen.add(str(result))
-            if idx >= self._settings.hits:
+            if len(response) >= self._settings.hits:
                 break
         return response
 
