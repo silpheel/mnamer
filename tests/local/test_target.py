@@ -69,6 +69,26 @@ def test_parse__season__assumes_first_season_for_two_digit_episode():
     assert target.metadata.episode == 2
 
 
+def test_parse__season__uses_ordinal_season_in_series_title():
+    target = Target(
+        Path("Kabushikigaisha Magilumiere 2nd Season - 05.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+    assert isinstance(target.metadata, MetadataEpisode)
+    assert target.metadata.season == 2
+    assert target.metadata.episode == 5
+
+
+def test_parse__season__uses_numbered_season_in_series_title():
+    target = Target(
+        Path("Some Series Season 3 - 05.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+    assert isinstance(target.metadata, MetadataEpisode)
+    assert target.metadata.season == 3
+    assert target.metadata.episode == 5
+
+
 def test_parse__episode__retries_filename_when_season_directory_hides_episode():
     target = Target(
         Path(

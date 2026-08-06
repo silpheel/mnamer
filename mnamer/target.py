@@ -194,7 +194,16 @@ class Target:
                 if len(bare_matches) == 1:
                     raw_data["episode"] = int(bare_matches[0])
                     if raw_data.get("season") is None:
-                        raw_data["season"] = 1
+                        season_match = re.search(
+                            r"(?ix)\b(?:season\s*(?P<prefix>\d{1,3})|"
+                            r"(?P<ordinal>\d{1,3})(?:st|nd|rd|th)\s+season)\b",
+                            raw_data.get("title", ""),
+                        )
+                        raw_data["season"] = (
+                            int(season_match["prefix"] or season_match["ordinal"])
+                            if season_match
+                            else 1
+                        )
         for k, v in raw_data.items():
             if hasattr(v, "alpha3"):
                 try:

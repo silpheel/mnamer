@@ -77,10 +77,13 @@ def test_tvdb_slug__config_alias_overrides_default():
 
 
 def test_tvdb_slug__config_alias_can_use_parsed_slug():
-    assert tvdb_slug(
-        "Kabushikigaisha Magilumiere 2nd Season",
-        {"kabushikigaisha-magilumiere-2nd-season": "magilumiere-co-ltd"},
-    ) == "magilumiere-co-ltd"
+    assert (
+        tvdb_slug(
+            "Kabushikigaisha Magilumiere 2nd Season",
+            {"kabushikigaisha-magilumiere-2nd-season": "magilumiere-co-ltd"},
+        )
+        == "magilumiere-co-ltd"
+    )
 
 
 def test_provider_factory__returns_configured_provider_types():
