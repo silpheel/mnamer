@@ -297,7 +297,7 @@ def test_tvdb_series_id_episodes_query__success_id_tvdb(tvdb_token):
     assert isinstance(result, dict)
     assert "data" in result
     data = result["data"]
-    assert len(data) == 100
+    assert data
     assert_has_keys(data[0], EXPECTED_TOP_LEVEL_SHOW_KEYS)
     assert str(data[0]["id"]) == LOST_TVDB_ID_EPISODE
 

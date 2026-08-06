@@ -2,6 +2,7 @@ import datetime as dt
 
 import pytest
 
+from mnamer.endpoints import tvdb_slug
 from mnamer.exceptions import MnamerNotFoundException
 from mnamer.language import Language
 from mnamer.metadata import MetadataEpisode, MetadataMovie
@@ -53,6 +54,35 @@ TVMAZE_EPISODE = {
 }
 
 
+@pytest.mark.parametrize(
+    ("series", "expected"),
+    [
+        ("Breaking Bad", "breaking-bad"),
+        ("LIAR GAME", "liar-game"),
+        ("Yomi no Tsugai", "yomi-no-tsugai"),
+        ("Saijo no Osewa", "saijo-no-osewa"),
+        ("Frieren: Beyond Journey's End", "sousou-no-frieren"),
+        ("Mahoutsukai no Yome", "the-ancient-magus-bride"),
+        ("SPY×FAMILY", "spy-x-family"),
+    ],
+)
+def test_tvdb_slug(series, expected):
+    assert tvdb_slug(series) == expected
+
+
+def test_tvdb_slug__config_alias_overrides_default():
+    assert tvdb_slug("My Parsed Title", {"My Parsed Title": "TVDb Canonical"}) == (
+        "tvdb-canonical"
+    )
+
+
+def test_tvdb_slug__config_alias_can_use_parsed_slug():
+    assert tvdb_slug(
+        "Kabushikigaisha Magilumiere 2nd Season",
+        {"kabushikigaisha-magilumiere-2nd-season": "magilumiere-co-ltd"},
+    ) == "magilumiere-co-ltd"
+
+
 def test_provider_factory__returns_configured_provider_types():
     settings = SettingStore()
 
@@ -80,6 +110,15 @@ def test_tvdb_from_settings__logs_in_when_cache_is_disabled(mocker):
     assert provider.cache is False
     assert provider.token == "token"
     mock_login.assert_called_once_with("configured-key")
+
+
+def test_tvdb_from_settings__uses_aliases():
+    aliases = {"Parsed Title": "TVDb Title"}
+    settings = SettingStore(tvdb_aliases=aliases)
+
+    provider = Tvdb.from_settings(settings)
+
+    assert provider.aliases == aliases
 
 
 def test_omdb_search__id_lookup(mocker):

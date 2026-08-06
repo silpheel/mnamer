@@ -19,6 +19,7 @@ from mnamer.endpoints import (
     tvdb_search_series,
     tvdb_series_id,
     tvdb_series_id_episodes_query,
+    tvdb_slug,
     tvmaze_episode_by_number,
     tvmaze_episodes_by_date,
     tvmaze_show,
@@ -256,10 +257,24 @@ class Tvdb(Provider[MetadataEpisode]):
     api_key: str = environ.get("API_KEY_TVDB", "E69C7A2CEF2F3152")
     token: str
 
-    def __init__(self, api_key: str = "", cache: bool = True):
+    def __init__(
+        self,
+        api_key: str = "",
+        cache: bool = True,
+        aliases: dict[str, str] | None = None,
+    ):
         super().__init__(api_key, cache)
         assert self.api_key
+        self.aliases = aliases or {}
         self.token = "" if self.cache else self._login()
+
+    @classmethod
+    def from_settings(cls, settings: SettingStore) -> Self:
+        return cls(
+            settings.api_key_tvdb or "",
+            not settings.no_cache,
+            settings.tvdb_aliases,
+        )
 
     def _login(self) -> str:
         return tvdb_login(self.api_key)
@@ -347,7 +362,11 @@ class Tvdb(Provider[MetadataEpisode]):
     ) -> Iterator[MetadataEpisode]:
         found = False
         series_data = tvdb_search_series(
-            self.token, series, language=language, cache=self.cache
+            self.token,
+            series,
+            language=language,
+            cache=self.cache,
+            aliases=self.aliases,
         )
 
         for series_id in [str(entry["id"]) for entry in series_data["data"][:5]]:
@@ -360,7 +379,9 @@ class Tvdb(Provider[MetadataEpisode]):
             except MnamerNotFoundException:
                 continue  # may not have requested episode or may be banned
         if not found:
-            raise MnamerNotFoundException
+            raise MnamerNotFoundException(
+                f"no TVDb episode match for series slug '{tvdb_slug(series, self.aliases)}'"
+            )
 
     def _search_tvdb_date(
         self, id_tvdb: str, release_date: dt.date, language: Language | None
@@ -379,7 +400,11 @@ class Tvdb(Provider[MetadataEpisode]):
     ) -> Iterator[MetadataEpisode]:
         release_date = parse_date(release_date)
         series_data = tvdb_search_series(
-            self.token, series, language=language, cache=self.cache
+            self.token,
+            series,
+            language=language,
+            cache=self.cache,
+            aliases=self.aliases,
         )
         tvdb_ids = [str(entry["id"]) for entry in series_data["data"][:5]]
         found = False
@@ -390,7 +415,9 @@ class Tvdb(Provider[MetadataEpisode]):
             except MnamerNotFoundException:
                 continue
         if not found:
-            raise MnamerNotFoundException
+            raise MnamerNotFoundException(
+                f"no TVDb episode match for series slug '{tvdb_slug(series, self.aliases)}'"
+            )
 
 
 class TvMaze(Provider[MetadataEpisode]):

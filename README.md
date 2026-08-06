@@ -91,6 +91,17 @@ DIRECTIVES:
 
 Parameters can either by entered as command line arguments or from a config file named `.mnamer-v2.json`.
 
+TVDb title aliases can be added to the same configuration file when a parsed
+title differs from its TVDb title:
+
+```json
+{
+    "tvdb_aliases": {
+        "My Parsed Title": "The TVDb Title"
+    }
+}
+```
+
 ## Contributions
 
 Community contributions are a welcome addition to the project. In order to be merged upstream any additions will need to be formatted with [ruff](https://docs.astral.sh/ruff/) for consistency with the rest of the project and pass the continuous integration tests run against each PR. Before introducing any major features or changes to the configuration api please consider opening [an issue](https://github.com/jkwill87/mnamer/issues) to outline your proposal.

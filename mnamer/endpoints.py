@@ -7,9 +7,12 @@ always-present per the API contract are required; partial/optional fields use `N
 """
 
 import datetime
+import re
+from collections.abc import Mapping
 from re import match
 from time import sleep
 from typing import Any, NotRequired, TypedDict, cast
+from unicodedata import normalize
 
 from mnamer.exceptions import (
     MnamerException,
@@ -21,6 +24,32 @@ from mnamer.utils import clean_dict, normalize_keys, parse_date, request_json
 
 OMDB_PLOT_TYPES = {"short", "long"}
 MAX_RETRIES = 5
+
+
+tvdb_aliases = {
+    "Frieren: Beyond Journey's End": "Sousou no Frieren",
+    "Mahoutsukai no Yome": "The Ancient Magus' Bride",
+}
+
+
+def tvdb_slug(series: str, aliases: Mapping[str, str] | None = None) -> str:
+    """Convert a series title to the slug accepted by the legacy TVDb API."""
+    all_aliases = dict(tvdb_aliases)
+    all_aliases.update(aliases or {})
+
+    aliased_series = all_aliases.get(series)
+    if aliased_series is None:
+        aliased_series = all_aliases.get(_tvdb_slug_text(series), series)
+    series = aliased_series.replace("×", " x ")
+    series = normalize("NFKD", series).encode("ascii", "ignore").decode()
+    return _tvdb_slug_text(series)
+
+
+def _tvdb_slug_text(series: str) -> str:
+    """Slugify a TVDb title without applying aliases."""
+    series = series.replace("×", " x ")
+    series = normalize("NFKD", series).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "-", series.lower()).strip("-")
 
 
 class OmdbSearchEntry(TypedDict):
@@ -493,6 +522,7 @@ def tvdb_search_series(
     id_zap2it: str | None = None,
     language: Language | None = None,
     cache: bool = True,
+    aliases: Mapping[str, str] | None = None,
 ) -> TvdbSearchResponse:
     """
     Allows the user to search for a series based on the following parameters.
@@ -502,8 +532,9 @@ def tvdb_search_series(
     """
     Language.ensure_valid_for_tvdb(language)
     url = "https://api.thetvdb.com/search/series"
+    slug = tvdb_slug(series, aliases) if series else None
     parameters: dict[str, Any] = {
-        "name": series,
+        "slug": slug,
         "imdbId": id_imdb,
         "zap2itId": id_zap2it,
     }
@@ -519,6 +550,8 @@ def tvdb_search_series(
             "series, id_imdb, id_zap2it parameters are mutually exclusive"
         )
     elif status == 404 or not content.get("data"):
+        if slug:
+            raise MnamerNotFoundException(f"no TVDb series found for slug '{slug}'")
         raise MnamerNotFoundException
     elif status != 200:  # pragma: no cover
         raise MnamerNetworkException("TVDb down or unavailable?")

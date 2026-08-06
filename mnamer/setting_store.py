@@ -357,6 +357,10 @@ class SettingStore:
         default_factory=lambda: {"&": "and", "@": "at", ";": ","},
         metadata=SettingSpec(group=SettingType.CONFIGURATION).as_dict(),
     )
+    tvdb_aliases: dict[str, str] = dataclasses.field(
+        default_factory=lambda: {},
+        metadata=SettingSpec(group=SettingType.CONFIGURATION).as_dict(),
+    )
 
     @classmethod
     def specifications(cls) -> list[SettingSpec]:

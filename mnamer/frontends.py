@@ -100,8 +100,8 @@ class Cli(Frontend):
             matches = []
             try:
                 matches = target.query()
-            except MnamerNotFoundException:
-                tty.msg("no matches found", MessageType.ALERT)
+            except MnamerNotFoundException as error:
+                tty.msg(str(error) or "no matches found", MessageType.ALERT)
             except MnamerNetworkException:
                 tty.msg("network error", MessageType.ALERT)
             if not matches and self.settings.no_guess:

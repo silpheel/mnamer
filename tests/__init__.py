@@ -33,6 +33,7 @@ DEFAULT_SETTINGS = {
     "recurse": False,
     "replace_after": {"&": "and", ";": ",", "@": "at"},
     "replace_before": {},
+    "tvdb_aliases": {},
     "scene": False,
     "targets": [],
     "test": False,
