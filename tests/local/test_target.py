@@ -83,10 +83,26 @@ def test_parse__episode__retries_filename_when_season_directory_hides_episode():
     assert target.metadata.episode == 2
 
 
-def test_parse__season__does_not_assume_for_one_digit_episode():
+def test_parse__episode__explicit_three_digit_episode_with_release_suffix():
     target = Target(
-        Path("Some Series - 2.mkv"), SettingStore(media=MediaType.EPISODE)
+        Path("Dragonball Z Kai S01E157CC.mkv"),
+        SettingStore(media=MediaType.EPISODE),
     )
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 157
+
+
+def test_parse__episode__assumes_first_season_for_clean_three_digit_episode():
+    target = Target(
+        Path("Dragonball Z Kai - 157.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 157
+
+
+def test_parse__season__does_not_assume_for_one_digit_episode():
+    target = Target(Path("Some Series - 2.mkv"), SettingStore(media=MediaType.EPISODE))
     assert isinstance(target.metadata, MetadataEpisode)
     assert target.metadata.season is None
 
@@ -96,9 +112,7 @@ def test_parse__season__normalizes_single_item_episode_lists(mocker):
         "mnamer.target.guessit",
         return_value={"title": "Some Series", "episode": [2]},
     )
-    target = Target(
-        Path("Some Series - 02.mkv"), SettingStore(media=MediaType.EPISODE)
-    )
+    target = Target(Path("Some Series - 02.mkv"), SettingStore(media=MediaType.EPISODE))
 
     assert target.metadata.season == 1
     assert target.metadata.episode == 2
@@ -294,9 +308,7 @@ def test_query():
 
 
 def test_query__filters_results_to_parsed_episode(mocker):
-    target = Target(
-        Path("Some Series - 02.mkv"), SettingStore(media=MediaType.EPISODE)
-    )
+    target = Target(Path("Some Series - 02.mkv"), SettingStore(media=MediaType.EPISODE))
     target._provider = mocker.Mock()
     target._provider.search.return_value = [
         MetadataEpisode(series="Some Series", season=1, episode=1),

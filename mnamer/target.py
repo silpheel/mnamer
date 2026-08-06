@@ -162,11 +162,11 @@ class Target:
         options = {"type": self._settings.media, "language": path_data["language"]}
         raw_data = dict(guessit(str(file_path), options))
         if isinstance(raw_data.get("season"), list):
-            raw_data = dict(guessit(str(file_path.parts[-1]), options))
+            raw_data = dict(guessit(file_path.name, options))
         elif raw_data.get("episode") is None:
             # A season directory can make GuessIt parse the season while
             # preventing it from recognizing the bare episode in the filename.
-            filename_data = dict(guessit(str(file_path.parts[-1]), options))
+            filename_data = dict(guessit(file_path.name, options))
             for key, value in filename_data.items():
                 if value is not None and raw_data.get(key) is None:
                     raw_data[key] = value
@@ -174,21 +174,27 @@ class Target:
         if isinstance(episode, list) and len(episode) == 1:
             episode = episode[0]
             raw_data["episode"] = episode
-        if (
-            (
-                self._settings.media is MediaType.EPISODE
-                or raw_data.get("type") == MediaType.EPISODE.value
+        is_episode = (
+            self._settings.media is MediaType.EPISODE
+            or raw_data.get("type") == MediaType.EPISODE.value
+        )
+        if is_episode:
+            explicit_match = re.search(
+                r"(?<![A-Za-z0-9])S(?P<season>\d{1,3})E(?P<episode>\d{1,4})(?!\d)",
+                file_path.name,
+                re.IGNORECASE,
             )
-            and raw_data.get("season") is None
-            and isinstance(episode, int)
-            and any(
-                int(match.group()) == episode
-                for match in re.finditer(
-                    r"(?<![A-Za-z0-9])\d{2}(?![A-Za-z0-9])", file_path.name
+            if explicit_match:
+                raw_data["season"] = int(explicit_match["season"])
+                raw_data["episode"] = int(explicit_match["episode"])
+            else:
+                bare_matches = re.findall(
+                    r"(?<![A-Za-z0-9])\d{2,3}(?![A-Za-z0-9])", file_path.name
                 )
-            )
-        ):
-            raw_data["season"] = 1
+                if len(bare_matches) == 1:
+                    raw_data["episode"] = int(bare_matches[0])
+                    if raw_data.get("season") is None:
+                        raw_data["season"] = 1
         for k, v in raw_data.items():
             if hasattr(v, "alpha3"):
                 try:

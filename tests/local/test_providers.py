@@ -253,9 +253,7 @@ def test_tvdb_search__filters_unexpected_episode_rows(mocker):
     )
 
     results = list(
-        Tvdb("key").search(
-            MetadataEpisode(series="Example Series", season=1, episode=2)
-        )
+        Tvdb("key").search(MetadataEpisode(id_tvdb="100", season=1, episode=2))
     )
 
     assert [(result.season, result.episode) for result in results] == [(1, 2)]
