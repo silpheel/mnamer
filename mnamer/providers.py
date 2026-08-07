@@ -331,6 +331,7 @@ class Tvdb(Provider[MetadataEpisode]):
                         continue
                     if episode is not None and entry_episode != episode:
                         continue
+                    episode_name = entry.get("episode_name")
                     yield MetadataEpisode(
                         date=parse_date(entry["first_aired"]),
                         episode=entry_episode,
@@ -342,7 +343,9 @@ class Tvdb(Provider[MetadataEpisode]):
                         .replace("\r\n", "")
                         .replace("  ", "")
                         .strip(),
-                        title=entry["episode_name"].split(";", 1)[0],
+                        title=episode_name.split(";", 1)[0]
+                        if episode_name is not None
+                        else None,
                     )
                     found = True
                 except (AttributeError, KeyError, ValueError):

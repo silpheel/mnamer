@@ -301,6 +301,25 @@ def test_tvdb_search__filters_unexpected_episode_rows(mocker):
     assert [(result.season, result.episode) for result in results] == [(1, 2)]
 
 
+def test_tvdb_search__accepts_episode_without_title(mocker):
+    mocker.patch("mnamer.providers.tvdb_login", return_value="token")
+    mocker.patch("mnamer.providers.tvdb_series_id", return_value=TVDB_SERIES)
+    mocker.patch(
+        "mnamer.providers.tvdb_series_id_episodes_query",
+        return_value={
+            "data": [{**TVDB_EPISODE, "episode_name": None}],
+            "links": {"last": 1},
+        },
+    )
+
+    result = next(
+        Tvdb("key").search(MetadataEpisode(id_tvdb="100", season=1, episode=2))
+    )
+
+    assert result.episode == 2
+    assert result.title is None
+
+
 def test_tvdb_search__paginates_and_skips_bad_episode_rows(mocker):
     mocker.patch("mnamer.providers.tvdb_login", return_value="token")
     mocker.patch("mnamer.providers.tvdb_series_id", return_value=TVDB_SERIES)

@@ -119,7 +119,7 @@ class TvdbEpisodeEntry(TypedDict):
     aired_episode_number: int
     aired_season: int
     overview: str | None
-    episode_name: str
+    episode_name: str | None
 
 
 class TvdbEpisodesResponse(TypedDict):
