@@ -320,6 +320,35 @@ def test_tvdb_search__accepts_episode_without_title(mocker):
     assert result.title is None
 
 
+def test_tvdb_search__falls_back_to_default_episode_title(mocker):
+    mocker.patch("mnamer.providers.tvdb_login", return_value="token")
+    mocker.patch("mnamer.providers.tvdb_series_id", return_value=TVDB_SERIES)
+    mock_episodes = mocker.patch(
+        "mnamer.providers.tvdb_series_id_episodes_query",
+        side_effect=[
+            {
+                "data": [{**TVDB_EPISODE, "episode_name": None}],
+                "links": {"last": 1},
+            },
+            {"data": [TVDB_EPISODE], "links": {"last": 1}},
+        ],
+    )
+
+    result = next(
+        Tvdb("key").search(
+            MetadataEpisode(
+                id_tvdb="100",
+                season=1,
+                episode=2,
+                language=Language("English", "en", "eng"),
+            )
+        )
+    )
+
+    assert result.title == "Episode Two"
+    assert mock_episodes.call_count == 2
+
+
 def test_tvdb_search__paginates_and_skips_bad_episode_rows(mocker):
     mocker.patch("mnamer.providers.tvdb_login", return_value="token")
     mocker.patch("mnamer.providers.tvdb_series_id", return_value=TVDB_SERIES)

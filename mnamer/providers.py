@@ -332,6 +332,10 @@ class Tvdb(Provider[MetadataEpisode]):
                     if episode is not None and entry_episode != episode:
                         continue
                     episode_name = entry.get("episode_name")
+                    if not episode_name and language is not None:
+                        episode_name = self._episode_name_without_language(
+                            id_tvdb, entry_season, entry_episode
+                        )
                     yield MetadataEpisode(
                         date=parse_date(entry["first_aired"]),
                         episode=entry_episode,
@@ -355,6 +359,31 @@ class Tvdb(Provider[MetadataEpisode]):
             page += 1
         if not found:
             raise MnamerNotFoundException
+
+    def _episode_name_without_language(
+        self, id_tvdb: str, season: int, episode: int
+    ) -> str | None:
+        """Fetch the default episode title when a localized title is missing."""
+        try:
+            episode_data = tvdb_series_id_episodes_query(
+                self.token,
+                id_tvdb,
+                episode,
+                season,
+                language=None,
+                page=1,
+                cache=self.cache,
+            )
+        except MnamerNotFoundException:
+            return None
+
+        for entry in episode_data["data"]:
+            if (
+                entry.get("aired_season") == season
+                and entry.get("aired_episode_number") == episode
+            ):
+                return entry.get("episode_name")
+        return None
 
     def _search_series(
         self,
