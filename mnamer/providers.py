@@ -404,7 +404,7 @@ class Tvdb(Provider[MetadataEpisode]):
         for series_id in [str(entry["id"]) for entry in series_data["data"][:5]]:
             try:
                 for data in self._search_id(series_id, season, episode, language):
-                    if not data.series or not data.season:
+                    if not data.series or data.season is None:
                         continue
                     found = True
                     yield data

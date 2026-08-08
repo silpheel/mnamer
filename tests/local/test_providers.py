@@ -391,6 +391,33 @@ def test_tvdb_search__series_tries_candidate_ids(mocker):
     assert mock_search_id.call_count == 2
 
 
+def test_tvdb_search__series_accepts_specials(mocker):
+    provider = Tvdb("key")
+    provider.token = "token"
+    mocker.patch(
+        "mnamer.providers.tvdb_search_series",
+        return_value={"data": [{"id": 100}]},
+    )
+    mocker.patch.object(
+        provider,
+        "_search_id",
+        return_value=[
+            MetadataEpisode(
+                id_tvdb="100",
+                series="Example Series",
+                season=0,
+                episode=4,
+            )
+        ],
+    )
+
+    results = list(
+        provider.search(MetadataEpisode(series="Example Series", season=0, episode=4))
+    )
+
+    assert [(result.season, result.episode) for result in results] == [(0, 4)]
+
+
 def test_tvdb_search__date_filters_id_results(mocker):
     provider = Tvdb("key")
     provider.token = "token"
