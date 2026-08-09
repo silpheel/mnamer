@@ -135,6 +135,18 @@ def test_parse__episode__uses_dashed_series_parent_when_filename_has_only_episod
     assert target.metadata.episode == 1
 
 
+def test_parse__episode__uses_parent_series_for_episode_prefixed_filename():
+    target = Target(
+        Path("Pluto (2024)/Season 01/S01E01 - Episode 1.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+
+    assert target.metadata.series == "Pluto"
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 1
+    assert target.metadata.title == "Episode 1"
+
+
 def test_parse__movie__retains_alternative_title_from_sanitized_filename():
     target = Target(
         Path("Title - Subtitle.mkv"),

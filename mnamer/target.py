@@ -168,13 +168,21 @@ class Target:
                 if value is not None and raw_data.get(key) is None:
                     raw_data[key] = value
 
-        if raw_data.get("title") is None:
-            for directory in reversed(file_path.parent.parts):
-                directory_data = dict(guessit(directory, options))
-                title = directory_data.get("title")
-                if isinstance(title, str):
-                    raw_data["title"] = title
-                    break
+        parent_title = None
+        for directory in reversed(file_path.parent.parts):
+            directory_data = dict(guessit(directory, options))
+            title = directory_data.get("title")
+            if isinstance(title, str):
+                parent_title = title
+                break
+        episode_prefix = re.match(
+            r"^\s*S\d{1,3}E\d{1,4}(?!\d)", file_path.stem, re.IGNORECASE
+        )
+        if parent_title and episode_prefix and raw_data.get("title"):
+            raw_data["episode_title"] = raw_data.get("title")
+            raw_data["title"] = parent_title
+        elif raw_data.get("title") is None and parent_title:
+            raw_data["title"] = parent_title
         episode = raw_data.get("episode")
         if isinstance(episode, list) and len(episode) == 1:
             episode = episode[0]
