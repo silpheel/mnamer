@@ -147,6 +147,21 @@ def test_parse__episode__uses_parent_series_for_episode_prefixed_filename():
     assert target.metadata.title == "Episode 1"
 
 
+def test_parse__episode__skips_specials_directory_for_parent_series():
+    target = Target(
+        Path(
+            "Psychic Squad (2008)/Specials/"
+            "S00E03 - Zettai Karen Children OVA Aitazousei! "
+            "Ubawareta Mirai - 2010-07-16.mkv"
+        ),
+        SettingStore(media=MediaType.EPISODE),
+    )
+
+    assert target.metadata.series == "Psychic Squad"
+    assert target.metadata.season == 0
+    assert target.metadata.episode == 3
+
+
 def test_parse__movie__retains_alternative_title_from_sanitized_filename():
     target = Target(
         Path("Title - Subtitle.mkv"),

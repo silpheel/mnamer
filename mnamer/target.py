@@ -168,11 +168,25 @@ class Target:
                 if value is not None and raw_data.get(key) is None:
                     raw_data[key] = value
 
-        parent_title = None
-        for directory in reversed(file_path.parent.parts):
-            directory_data = dict(guessit(directory, options))
-            title = directory_data.get("title")
-            if isinstance(title, str):
+        parent_title = path_data_guess.get("title")
+        if isinstance(parent_title, list):
+            parent_title = None
+        if isinstance(parent_title, str) and re.match(
+            r"(?i)^(?:specials?|extras?|bonuses?|ovas?|onas?|"
+            r"season\s*\d+|s\d+|(?:disc|disk|part|volume|vol)\s*\d+)$",
+            parent_title,
+        ):
+            parent_title = None
+        if parent_title is None:
+            for directory in reversed(file_path.parent.parts):
+                directory_data = dict(guessit(directory, options))
+                title = directory_data.get("title")
+                if not isinstance(title, str) or re.match(
+                    r"(?i)^(?:specials?|extras?|bonuses?|ovas?|onas?|"
+                    r"season\s*\d+|s\d+|(?:disc|disk|part|volume|vol)\s*\d+)$",
+                    title,
+                ):
+                    continue
                 parent_title = title
                 break
         episode_prefix = re.match(
