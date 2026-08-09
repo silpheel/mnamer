@@ -103,6 +103,57 @@ def test_parse__episode__retries_filename_when_season_directory_hides_episode():
     assert target.metadata.episode == 2
 
 
+@pytest.mark.parametrize(
+    ("series", "expected_series"),
+    [
+        ("one-punch man", "One-Punch Man"),
+        ("Plus-sized misadventures in love", "Plus-Sized Misadventures in Love"),
+        ("K-On!", "K-On!"),
+    ],
+)
+def test_parse__episode__preserves_dashes_in_parent_and_filename(
+    series, expected_series
+):
+    target = Target(
+        Path(f"{series}/Season 01/{series} - 01.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+
+    assert target.metadata.series == expected_series
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 1
+
+
+def test_parse__episode__uses_dashed_series_parent_when_filename_has_only_episode():
+    target = Target(
+        Path("one-punch man/Season 01/01.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+
+    assert target.metadata.series == "One-Punch Man"
+    assert target.metadata.season == 1
+    assert target.metadata.episode == 1
+
+
+def test_parse__movie__retains_alternative_title_from_sanitized_filename():
+    target = Target(
+        Path("Title - Subtitle.mkv"),
+        SettingStore(media=MediaType.MOVIE),
+    )
+
+    assert target.metadata.name == "Title"
+
+
+def test_parse__episode__does_not_append_episode_title_to_series():
+    target = Target(
+        Path("Series - Episode S01E01.mkv"),
+        SettingStore(media=MediaType.EPISODE),
+    )
+
+    assert target.metadata.series == "Series"
+    assert target.metadata.title == "Episode"
+
+
 def test_parse__episode__explicit_three_digit_episode_with_release_suffix():
     target = Target(
         Path("Dragonball Z Kai S01E157CC.mkv"),
@@ -191,6 +242,23 @@ def test_ambiguous_subtitle_language():
 
 def test_destination__simple():
     pass  # TODO
+
+
+@pytest.mark.parametrize(
+    ("filename", "same_as_destination"),
+    [
+        ("S01E01 My Title Here.mkv", False),
+        ("Series - S01E01 - My Title Changed.mkv", False),
+        ("Series - S01E01 - My Title Here.mkv", True),
+    ],
+)
+def test_destination__episode_round_trip_is_stable(filename, same_as_destination):
+    target = Target(Path("Series/Season 01") / filename, SettingStore())
+    target.metadata.update(
+        MetadataEpisode(series="Series", season=1, episode=1, title="My Title Here")
+    )
+
+    assert (target.destination == target.source.resolve()) is same_as_destination
 
 
 def test_destination__relative_directory_lowered():

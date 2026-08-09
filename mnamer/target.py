@@ -160,16 +160,21 @@ class Target:
             except MnamerException:
                 pass
         options = {"type": self._settings.media, "language": path_data["language"]}
-        raw_data = dict(guessit(str(file_path), options))
-        if isinstance(raw_data.get("season"), list):
-            raw_data = dict(guessit(file_path.name, options))
-        elif raw_data.get("episode") is None:
-            # A season directory can make GuessIt parse the season while
-            # preventing it from recognizing the bare episode in the filename.
-            filename_data = dict(guessit(file_path.name, options))
-            for key, value in filename_data.items():
+        path_data_guess = dict(guessit(str(file_path), options))
+        filename_data = dict(guessit(file_path.name, options)) if file_path.name else {}
+        raw_data = filename_data or path_data_guess
+        for key, value in path_data_guess.items():
+            if key not in {"title", "alternative_title", "episode_title"}:
                 if value is not None and raw_data.get(key) is None:
                     raw_data[key] = value
+
+        if raw_data.get("title") is None:
+            for directory in reversed(file_path.parent.parts):
+                directory_data = dict(guessit(directory, options))
+                title = directory_data.get("title")
+                if isinstance(title, str):
+                    raw_data["title"] = title
+                    break
         episode = raw_data.get("episode")
         if isinstance(episode, list) and len(episode) == 1:
             episode = episode[0]
@@ -257,16 +262,20 @@ class Target:
         except MnamerException:
             pass
         if isinstance(self.metadata, MetadataMovie):
-            self.metadata.name = path_data.get("title")
+            title = path_data.get("title")
+            alternative_title = path_data.get("alternative_title")
+            if title and alternative_title:
+                title = f"{title} - {alternative_title}"
+            self.metadata.name = title
             self.metadata.year = path_data.get("year")
         elif isinstance(self.metadata, MetadataEpisode):
             self.metadata.date = path_data.get("date")
             self.metadata.episode = path_data.get("episode")
             self.metadata.season = path_data.get("season")
             self.metadata.series = path_data.get("title")
-            alternative_title = path_data.get("alternative_title")
-            if alternative_title:
-                self.metadata.series = f"{self.metadata.series} {alternative_title}"
+            self.metadata.title = path_data.get("episode_title") or path_data.get(
+                "alternative_title"
+            )
             # adding year to title can reduce false positives
             # year = path_data.get("year")
             # if year:
